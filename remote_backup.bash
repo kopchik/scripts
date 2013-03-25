@@ -1,19 +1,15 @@
 #!/bin/bash
 
 #TODO: check whatss happend on overquota
-#TODO: make a lockfile
-#TODO: check filesize(when sources is stdin check too)
-#TODO: allow to chouse output filename when source is stdin
 #DONE:
-    #what happend if connection broke? - nothing good
+#what happend if connection broke? - nothing good
 
 BASE="/mnt/dim13"
 REMOTE="exe@dim13.org"
+PASSWORD="file:/root/.backup_enc_pass"
 
 ## EXE BASHLIB VERSION=1.5 ##############################
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:$PATH
-#TODO: check getLinHash
-
 color_yellow() { echo -ne "\033[33;1m"; }
 color_red() { echo -ne "\033[31;1m"; }
 color_white() { echo -ne "\033[00m"; }
@@ -57,11 +53,11 @@ function add_on_exit()
 #SANITY CHECK
 INFILE="$1"
 if [ "$INFILE" == "-" ]; then
-    test $# -ne 2 && die "this script accepts 2 parameters('-' and dst filename)"
+    test $# -ne 2 && die "this script accepts 2 parameters ('-' and dst filename)"
     MODE="stdin"
     OUTFILE="${BASE}/${2}-`date +%F`"
 else
-    test $# -ne 1 && die "this script accepts only 1 parameter(filename to copy)"
+    test $# -ne 1 && die "this script accepts only 1 parameter (filename to copy)"
     MODE="copy"
     test -f "$INFILE"  || die "can't find file \"$INFILE\""
     OUTFILE="${BASE}/`basename $1`_enc-`date +%F`"
@@ -69,16 +65,15 @@ fi
 
 
 #REMOTE MOUNT
-#curlftpfs -o ssl,tlsv1,no_verify_peer,no_verify_hostname ftp://b5.col.agava.net $BASE || die "cant mount ftpfs"
 sshfs -C arcfour $REMOTE: $BASE || die "cant mount sshfs"
-add_on_exit fusermount -u $BASE
+add_on_exit fusermount -u $BASE || die "cant unmount sshfs"
 
 
 #UPLOAD FILE
-test -s "$OUTFILE" && die "output file allready exists: \"$OUTFILE\""
+test -s "$OUTFILE" && die "output file already exists: \"$OUTFILE\""
 #to decode use "openssl enc -d -aes-256-cbc -in file.enc -out file.dec"
 if [ "$MODE" == "copy" ]; then
-    openssl enc -aes-256-cbc -salt -pass file:/root/.backup_enc_pass -in "$INFILE" -out "$OUTFILE" || die "openssl error"
+    openssl enc -aes-256-cbc -salt -pass $PASSWORD -in "$INFILE" -out "$OUTFILE" || die "openssl error"
     #VERIFY UPLOAD
     FILESIZE=$(stat -c%s "$INFILE")
     UPLOADSIZE=$(stat -c%s "$OUTFILE") || die "upload file error"
@@ -87,8 +82,8 @@ if [ "$MODE" == "copy" ]; then
         die "uploaded file less than orig. At least check quota."
     fi
 else
-    cat | openssl enc -aes-256-cbc -salt -pass file:/root/.backup_enc_pass > "$OUTFILE" || die "openssl error"
+    cat | openssl enc -aes-256-cbc -salt -pass $PASSWORD > "$OUTFILE" || die "openssl error"
 fi
 
 
-sync #this will never hurt (c) slackware. Actually it can :)
+sync # this will never hurt (c) slackware. Actually it can :)
