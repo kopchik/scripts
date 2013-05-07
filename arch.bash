@@ -51,6 +51,9 @@ $install dosfstools
 $install calc
 $install pwgen
 
+systemctl enable cronie
+systemctl start cronie
+
 #DEVEL
 $install ghc
 $install ipython
