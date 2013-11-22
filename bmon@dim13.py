@@ -50,7 +50,7 @@ def backupcheck(g):
   now = time()
   interval = now - ts  # where ts is the ts of the last backup
   if now - ts > 25*HOURS:
-    error("for last backup was %.1h ago" % (g, interval))
+    error("for last backup was %.1fh ago" % (g, interval))
 
   verdict = all(t[0] for r in log)
   return verdist, log
