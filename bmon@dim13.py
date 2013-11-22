@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 from __future__ import print_function, division
 
-
-HOURS   = 3600
-PATTERNS  = ["kliga-*", "kurdiani-*", "stuff-*"]
-MAXCHANGE = 0.1  # how much can consequent backups change (e.g., 0.1 for 10%)
+HOURS       = 3600
+PATTERNS    = ["kliga-*", "kurdiani-*", "stuff-*"]
+MAXCHANGE   = 0.1  # how much can consequent backups change (e.g., 0.1 for 10%)
 MAXINTERVAL = 25*HOURS
+QUOTAWARN   = 0.9  # warn when 90% of disk quota is used
 
+from subprocess import check_output
 from glob import glob
-from os import stat
 from time import time
+from sys import exit
+from os import stat
 
-#from collections import namedtuple
-#mystat = namedtuple("mystat", ["size", "ts"])
 ERROR = 0
 OK    = 1
 WARNING = 2
@@ -20,7 +20,16 @@ statusmap = {ERROR: "ERROR", OK: "OK", WARNING: "WARNING"}
 
 
 def quotacheck():
-  TODO
+  status = OK, "quota is fine"
+  output = check_output("quota").splitlines()
+  quotas = output[2:]  # strip headers
+  for quota in quotas:
+    mnt, used, quota, hardlim, files, flimit, fhardlim = quota.split()
+    percentage = int(used)/int(quota)
+    if percentage > QUOTAWARN:
+      print("There is a quota problem on %s\n" % mnt)
+      status = ERROR, "check quota"
+  return status
 
 
 def backupcheck(g):
@@ -62,14 +71,27 @@ def backupcheck(g):
 
 
 def fmtlog(p, verdict, log):
-  print("for", p, "status is", statusmap[verdict])
+  print(p, ":", statusmap[verdict])
   for status, msg in log:
     print(statusmap[status],":", msg)
   print()
 
 
 if __name__ == '__main__':
+  status = OK, "everything is fine"
+  badstatus = ERROR, "something was wrong"
+
+  try:
+    quotacheck()
+  except Exception as err:
+    print("quota check failed with", err)
+    status = badstatus
+
   for p in PATTERNS:
     verdict, log = backupcheck(p)
     if verdict != OK:
       fmtlog(p, verdict, log)
+      status = badstatus
+
+  print(status[1])
+  exit(0) if status != badstatus else exit(1)
