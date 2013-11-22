@@ -1,6 +1,11 @@
 #!/usr/bin/env python
+from __future__ import print_function, division
 
-PATTERNS = ["kliga-*", "kurdiani-*", "stuff-*"]
+
+HOURS   = 3600
+PATTERNS  = ["kliga-*", "kurdiani-*", "stuff-*"]
+MAXCHANGE = 0.1  # how much can consequent backups change (e.g., 0.1 for 10%)
+MAXINTERVAL = 25*HOURS
 
 from glob import glob
 from os import stat
@@ -11,9 +16,8 @@ from time import time
 ERROR = 0
 OK    = 1
 WARNING = 2
+statusmap = {ERROR: "ERROR", OK: "OK", WARNING: "WARNING"}
 
-MINUTES = 60
-HOURS   = 60*MINUTES
 
 def quotacheck():
   TODO
@@ -33,34 +37,36 @@ def backupcheck(g):
 
   stats = ((f, stat(f)) for f in files)
   stats = [(f, s.st_size, s.st_ctime) for f,s in stats]
-  stats.sort(key=lambda t: t[2], reverse=True)
-  
+  stats.sort(key=lambda t: t[2])
+
   # check interval between backups and size changes
   prevf, prevs, prevts = stats[0]
-  for f,s,ts in stats[1:]:
-    ratio = s/prevs
-    if not (0.9 < ratio < 1.1):
-      error("too big difference in size" \
-        "between %s and %s for %s and %s" % (prevs, s, prevf, f))
-    interval = ts - prevts
-    if interval > 25*3600:
-      error("too big interval (%.1fh) between %f and %f" %(interval/HOURS, prevf, f))
+  for f,size,tstamp in stats[1:]:
+    change = abs((size-prevs)/prevs)
+    if change > MAXCHANGE:
+      error("backups changed for %.2f%% between %s and %s" % (change*100, prevf, f))
+    interval = tstamp - prevts
+    if interval < 0 or interval > MAXINTERVAL:
+      error("too big interval (%.1fh) "  \
+            "between %s and %s" %(interval/HOURS, prevf, f))
+    prevf,prevs,prevts = f,size,tstamp
 
   # check the last backup
   now = time()
-  interval = now - ts  # where ts is the ts of the last backup
-  if now - ts > 25*HOURS:
-    error("for last backup was %.1fh ago" % (g, interval))
+  interval = now - tstamp  # where ts is the ts of the last backup
+  if interval > 25*HOURS:
+    error("%s: last backup (%s) was %.1fh ago" % (g, f, interval/HOURS))
 
-  verdict = all(t[0] for r in log)
-  return verdist, log
+  verdict = all(status for status,msg in log)
+  return verdict, log
 
 
 def fmtlog(p, verdict, log):
-  print("for", p, "status is", {ERROR: "ERROR", OK: "OK", WARNING: "WARNING"}[verdict])
+  print("for", p, "status is", statusmap[verdict])
   for status, msg in log:
-    print(status, msg)
+    print(statusmap[status],":", msg)
   print()
+
 
 if __name__ == '__main__':
   for p in PATTERNS:
