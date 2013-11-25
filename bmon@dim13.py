@@ -79,7 +79,7 @@ def fmtlog(p, verdict, log):
 
 if __name__ == '__main__':
   status = OK, "everything is fine"
-  badstatus = ERROR, "something was wrong"
+  badstatus = ERROR, "Bad exit status due to the previous errors"
 
   try:
     quotacheck()
