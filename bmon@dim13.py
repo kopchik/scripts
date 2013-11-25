@@ -6,14 +6,15 @@ PATTERNS    = ["kliga-*", "kurdiani-*", "stuff-*"]
 MAXCHANGE   = 0.1  # how much can consequent backups change (e.g., 0.1 for 10%)
 MAXINTERVAL = 25*HOURS
 QUOTAWARN   = 0.9  # warn when 90% of disk quota is used
-MINBACKUPS  = 4
+MINBACKUPS  = 3
+MAXBACKUPS  = 6
 
 
 from subprocess import check_output
+from os import stat, unlink
 from glob import glob
 from time import time
 from sys import exit
-from os import stat
 
 ERROR = 0
 OK    = 1
@@ -34,7 +35,7 @@ def quotacheck():
   return status
 
 
-def backupcheck(g):
+def backupcheck(g, maxbackups=-1):
   log = []
   def warning(msg):
     log.append((WARNING, msg))
@@ -49,14 +50,13 @@ def backupcheck(g):
   stats = ((f, stat(f)) for f in files)
   stats = [(f, s.st_size, s.st_mtime) for f,s in stats]
   stats.sort(key=lambda t: t[2])
-  
+
+  # check number of backups
   if len(stats) < 2:
     error("OMG JUST ONE BACKUP!")
     return ERROR, log
-
-  if len(stats) < MINBACKUPS:
+  elif len(stats) < MINBACKUPS:
     error("too low number of backups")
-
 
   # check interval between backups and size changes
   prevf, prevs, prevts = stats[0]
@@ -75,6 +75,14 @@ def backupcheck(g):
   interval = now - tstamp  # where ts is the ts of the last backup
   if interval > 25*HOURS:
     error("%s: last backup (%s) was %.1fh ago" % (g, f, interval/HOURS))
+
+  # prune old backups
+  if maxbackups > 2:
+    for fname, _, _ in stats[:-maxbackups]:
+      try:
+        unlink(fname)
+      except Exception as err:
+        error("cannot unlink %s: %s" % (fname, err))
 
   verdict = all(status for status,msg in log)
   return verdict, log
@@ -98,7 +106,7 @@ if __name__ == '__main__':
     status = badstatus
 
   for p in PATTERNS:
-    verdict, log = backupcheck(p)
+    verdict, log = backupcheck(p, maxbackups=MAXBACKUPS)
     if verdict != OK:
       fmtlog(p, verdict, log)
       status = badstatus
