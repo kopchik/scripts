@@ -6,6 +6,8 @@ PATTERNS    = ["kliga-*", "kurdiani-*", "stuff-*"]
 MAXCHANGE   = 0.1  # how much can consequent backups change (e.g., 0.1 for 10%)
 MAXINTERVAL = 25*HOURS
 QUOTAWARN   = 0.9  # warn when 90% of disk quota is used
+MINBACKUPS  = 4
+
 
 from subprocess import check_output
 from glob import glob
@@ -45,8 +47,16 @@ def backupcheck(g):
     return ERROR, log
 
   stats = ((f, stat(f)) for f in files)
-  stats = [(f, s.st_size, s.st_ctime) for f,s in stats]
+  stats = [(f, s.st_size, s.st_mtime) for f,s in stats]
   stats.sort(key=lambda t: t[2])
+  
+  if len(stats) < 2:
+    error("OMG JUST ONE BACKUP!")
+    return ERROR, log
+
+  if len(stats) < MINBACKUPS:
+    error("too low number of backups")
+
 
   # check interval between backups and size changes
   prevf, prevs, prevts = stats[0]
