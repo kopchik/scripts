@@ -1,0 +1,11 @@
+[Unit]
+Description="Save/Restore clock for battery-less devices"
+
+[Service]
+Type=oneshot
+ExecStart=-/bin/sh -c 'date -s "`cat /var/cache/clock`"'
+ExecStop=-/bin/sh -c 'date > /var/cache/clock'
+ExecReload=
+
+[Install]
+WantedBy=sysinit.target
