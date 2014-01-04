@@ -8,6 +8,7 @@ MAXINTERVAL = 25*HOURS
 QUOTAWARN   = 0.9  # warn when 90% of disk quota is used
 MINBACKUPS  = 3
 MAXBACKUPS  = 6
+CHECKDEEP   = 2  # how many prev backups are checked for MAXCHANGE and MAXINTERVAL
 
 
 from subprocess import check_output
@@ -59,10 +60,10 @@ def backupcheck(g, maxbackups=-1):
     error("too low number of backups")
 
   # check interval between backups and size changes
-  prevf, prevs, prevts = stats[0]
-  for f,size,tstamp in stats[1:]:
-    change = abs((size-prevs)/prevs)
-    if change > MAXCHANGE:
+  prevf, prevs, prevts = stats[-CHECKDEEP]
+  for f,size,tstamp in stats[-(CHECKDEEP-1):]:
+    change = (size - prevs) / prevs
+    if abs(change) > MAXCHANGE:
       error("backups changed for %.2f%% between %s and %s" % (change*100, prevf, f))
     interval = tstamp - prevts
     if interval < 0 or interval > MAXINTERVAL:
@@ -71,6 +72,7 @@ def backupcheck(g, maxbackups=-1):
     prevf,prevs,prevts = f,size,tstamp
 
   # check the last backup
+  _, _, tstamp = stats[-1]
   now = time()
   interval = now - tstamp  # where ts is the ts of the last backup
   if interval > 25*HOURS:
