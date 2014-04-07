@@ -1,0 +1,13 @@
+[Unit]
+Description=Lock X session using slock
+Before=sleep.target
+
+[Service]
+User=yourusername
+Type=oneshot
+Environment=DISPLAY=:0
+ExecStart=/bin/slock
+
+
+[Install]
+WantedBy=sleep.target
