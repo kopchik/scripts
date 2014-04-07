@@ -1,4 +1,18 @@
 #!/bin/bash
+
+#set time
+#locale
+#resolv.conf
+#fstab
+#swap
+#nomodeset and text grub
+#modules
+#mkinitcpio -p linux
+#grub-mkconfig -o /boot/grub/grub.cfg
+#grub-install
+
+
+#TODO: fix journal size
 install="pacman -S"
 
 rmmod pcspkr
@@ -14,6 +28,7 @@ gpasswd sudo gpasswd -a exe audio
 
 #echo "enter root password"
 #passwd root
+#TODO: journal size
 
 #SELECT MIRRORS
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
@@ -39,6 +54,7 @@ $install tmux
 $install vim
 $install atop
 $install wget
+$install aria2
 $install sudo
 $install dialog
 $install mc
@@ -68,6 +84,7 @@ $install terminus-font
 $install xorg-xset
 $install alsa-utils
 $install slock
+$install xautolock
 $install dmenu
 $install fluxbox
 $install rxvt-unicode
