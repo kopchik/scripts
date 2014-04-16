@@ -12,6 +12,10 @@
 #grub-install
 
 
+sudo systemctl disable man-db.time
+sudo systemctl disable man-db.service
+
+
 #TODO: fix journal size
 install="pacman -S"
 
@@ -24,6 +28,7 @@ mkdir /home/exe
 chown exe /home/exe
 chmod 700 /home/exe
 gpasswd sudo gpasswd -a exe adm
+gpasswd sudo gpasswd -a exe wheel
 gpasswd sudo gpasswd -a exe audio
 
 #echo "enter root password"
