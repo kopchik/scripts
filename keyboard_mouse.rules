@@ -1,0 +1,2 @@
+ACTION=="add", KERNEL=="mouse*", RUN+="/home/exe/github/scripts/keyboard_mouse.bash"
+ACTION=="add", ATTRS{name}=="*eyboard*", RUN+="/home/exe/github/scripts/keyboard_mouse.bash"
