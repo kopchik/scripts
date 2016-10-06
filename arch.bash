@@ -27,9 +27,10 @@ useradd exe
 mkdir /home/exe
 chown exe /home/exe
 chmod 700 /home/exe
-gpasswd sudo gpasswd -a exe adm
-gpasswd sudo gpasswd -a exe wheel
-gpasswd sudo gpasswd -a exe audio
+
+sudo gpasswd -a exe adm
+sudo gpasswd -a exe wheel
+sudo gpasswd -a exe audio
 
 #echo "enter root password"
 #passwd root
@@ -87,6 +88,10 @@ $install strace
 $install lsof
 
 #X
+$install xorg-xset
+$install xorg-xhost
+$install xf86-video-intel 
+
 $install xorg-xbacklight
 $install terminus-font
 $install xorg-xset
