@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3.3
 from __future__ import print_function, division
 
 HOURS       = 3600
 PATTERNS    = ["kliga-*", "kurdiani-*", "stuff-*"]
-MAXCHANGE   = 0.1  # how much can consequent backups change (e.g., 0.1 for 10%)
-MAXINTERVAL = 25*HOURS
+MAXCHANGE   = 0.14  # how much can consequent backups change (e.g., 0.1 for 10%)
+MAXINTERVAL = 30*HOURS
 QUOTAWARN   = 0.9  # warn when 90% of disk quota is used
 MINBACKUPS  = 3
 MAXBACKUPS  = 6
@@ -25,18 +25,24 @@ statusmap = {ERROR: "ERROR", OK: "OK", WARNING: "WARNING"}
 
 def quotacheck():
   status = OK, "quota is fine"
-  output = check_output("quota").splitlines()
+  output = check_output("quota").decode().splitlines()
   quotas = output[2:]  # strip headers
   for quota in quotas:
-    mnt, used, quota, hardlim, files, flimit, fhardlim = quota.split()
+    try:
+      #mnt, used, quota, hardlim, grace, files, flimit, fhardlim = quota.split()
+      mnt, used, quota, hardlim, *rest = quota.split()
+      used = used.strip('*')  # remove possible mark of overquota
+    except Exception as err:
+      return ERROR, "%s: %s" % (err, quota)
     percentage = int(used)/int(quota)
     if percentage > QUOTAWARN:
-      print("There is a quota problem on %s\n" % mnt)
-      status = ERROR, "check quota"
+      status = ERROR, "quota exceeding for %s: %s used (quota=%s)" % (mnt, used, quota)
   return status
 
 
 def backupcheck(g, maxbackups=-1):
+  global CHECKDEEP
+
   log = []
   def warning(msg):
     log.append((WARNING, msg))
@@ -58,6 +64,10 @@ def backupcheck(g, maxbackups=-1):
     return ERROR, log
   elif len(stats) < MINBACKUPS:
     error("too low number of backups")
+
+  if CHECKDEEP < 2:
+    CHECKDEEP = 2
+    error("CHECKDEEP should be > 2")
 
   # check interval between backups and size changes
   prevf, prevs, prevts = stats[-CHECKDEEP]
@@ -102,10 +112,14 @@ if __name__ == '__main__':
   badstatus = ERROR, "Bad exit status due to the previous errors"
 
   try:
-    quotacheck()
+    verdict, log = quotacheck()
+    if verdict != OK:
+      print(log)
+      status = badstatus
   except Exception as err:
-    print("quota check failed with", err)
     status = badstatus
+    print("quota check failed:", err)
+
 
   for p in PATTERNS:
     verdict, log = backupcheck(p, maxbackups=MAXBACKUPS)
