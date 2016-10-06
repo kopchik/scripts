@@ -47,6 +47,9 @@ echo "upgrading world"
 pacman -Suy
 
 #BASE
+$install dhcpcd
+$install net-tools
+$install dnsutils
 $install lm_sensors
 $install ethtool
 $install iptables
