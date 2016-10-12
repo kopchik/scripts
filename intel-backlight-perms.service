@@ -1,0 +1,10 @@
+[Unit]
+Description=Allow user access to keyboard backlight
+After=systemd-udevd.service
+
+[Service]
+;ExecStart=/bin/chown :users /sys/class/backlight/intel_backlight/brightness
+ExecStart=/bin/chmod 666    /sys/class/backlight/intel_backlight/brightness
+
+[Install]
+WantedBy=multi-user.target
