@@ -11,6 +11,7 @@
 #grub-mkconfig -o /boot/grub/grub.cfg
 #grub-install
 
+# picocom unrar
 
 sudo systemctl disable man-db.time
 sudo systemctl disable man-db.service
@@ -31,6 +32,8 @@ chmod 700 /home/exe
 sudo gpasswd -a exe adm
 sudo gpasswd -a exe wheel
 sudo gpasswd -a exe audio
+sudo gpasswd -a exe users
+sudo gpasswd -a exe uucp   # /dev/ttyUSB0
 
 #echo "enter root password"
 #passwd root
@@ -49,6 +52,7 @@ pacman -Suy
 
 #BASE
 $install dhcpcd
+$install rsync
 $install net-tools
 $install dnsutils
 $install lm_sensors
@@ -90,7 +94,10 @@ $install lsof
 #X
 $install xorg-xset
 $install xorg-xhost
-$install xf86-video-intel 
+$install xorg-xprop
+$install xorg-xkill
+$install xdotool
+$install xf86-video-intel
 
 $install xorg-xbacklight
 $install terminus-font
