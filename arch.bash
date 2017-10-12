@@ -73,12 +73,14 @@ $install dialog
 $install mc
 $install ntfs-3g
 $install wpa_supplicant
+$install rfkill
 $install iw
 $install tcpdump
 $install openvpn
 $install dosfstools
 $install calc
 $install pwgen
+$intaall unzip
 
 systemctl enable cronie
 systemctl start cronie
@@ -95,27 +97,21 @@ $install lsof
 $install xorg-xset
 $install xorg-xhost
 $install xorg-xprop
+$install xorg-xrandr
 $install xorg-xkill
+$install xorg-xbacklight
+$install xorg-setxkbmap
+$install xorg-xset
 $install xdotool
 $install xf86-video-intel
 
-$install xorg-xbacklight
 $install terminus-font
-$install xorg-xset
 $install alsa-utils
 $install slock
 $install xautolock
 $install dmenu
 $install fluxbox
 $install rxvt-unicode
-echo << EOF > /usr/local/bin/urxvtcd
-#!/bin/sh
-urxvtc "\$@"
-if [ \$? -eq 2 ]; then
-    urxvtd -q -f
-    exec urxvtc "\$@"
-fi
-EOF
-chmod +x /usr/local/bin/urxvtcd
+pkgbuilder -S xkbset
 $install firefox
 $install chromium
