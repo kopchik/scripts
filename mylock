@@ -1,7 +1,0 @@
-#!/bin/bash
-PROGRAM=sflock
-
-disable_caps
-setxkbmap -layout us
-killall $PROGRAM
-$PROGRAM
